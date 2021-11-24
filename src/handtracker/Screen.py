@@ -12,10 +12,11 @@ class Screen():
         self.cap = cv2.VideoCapture(screen_number)
         self.cap.set(3, screen_size_x)
         self.cap.set(4, screen_size_y)
-
+        self.header_index = 0
+        self.overlayList = self.setup_header_list()
         self.detector = htm.HandDetector(min_detection_confidence=0.50)
 
-    def setup_header(self, img, image_index=0, folder_path="header"):
+    def setup_header_list(self, folder_path="header"):
         myList = os.listdir(folder_path)
         overlayList = []
 
@@ -23,10 +24,7 @@ class Screen():
             image = cv2.imread(f'{folder_path}/{imPath}')
             overlayList.append(image)
 
-        header = overlayList[image_index]
-        img[0:header.shape[0], 0:header.shape[1]] = header
-
-        return img
+        return overlayList
 
     def draw(self, img, lmList):
 
@@ -50,24 +48,17 @@ class Screen():
                 # checking for the click
                 if y1 < 106:
                     if 310 < x1 < 401:
-                        # header = overlayList[3]
-                        self.setup_header(img, 3)
+                        self.header_index = 3
                     elif 465 < x1 < 560:
-                        # header = overlayList[0]
-                        self.setup_header(img, 0)
+                        self.header_index = 0
                     elif 620 < x1 < 712:
-                        # header = overlayList[2]
-                        self.setup_header(img, 2)
+                        self.header_index = 2
                     elif 857 < x1 < 933:
-                        # header = overlayList[1]
-                        self.setup_header(img, 1)
+                        self.header_index = 1
             # Drawing mode
             if fingers[1] and fingers[2] == False:
                 cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
                 print("Drawing Mode")
-
-            # Setting the header image
-
 
         return img
 
@@ -80,12 +71,14 @@ class Screen():
             success, img = self.cap.read()
             img = cv2.flip(img, 1)
 
-            img = self.setup_header(img, 0)
             # Find hand landmarks
             img = self.detector.findHands(img=img, draw=False)
             for handNumber in range(0, self.detector.handCount()):
                 lmList = self.detector.find_position(img, handNumber=handNumber, draw=False)
                 img = self.draw(img, lmList)
+
+            header = self.overlayList[self.header_index]
+            img[0:header.shape[0], 0:header.shape[1]] = header
 
             cv2.imshow("Image", img)
 
