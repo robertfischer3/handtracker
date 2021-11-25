@@ -4,7 +4,9 @@ import time
 import os
 import HandTrackingModule as htm
 import PIL
-
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+from geometry_utility import create_rectangle_array, point_intersects
 
     # Leaving gracefully
 class Screen():
@@ -15,6 +17,8 @@ class Screen():
         self.header_index = 0
         self.overlayList = self.setup_header_list()
         self.detector = htm.HandDetector(min_detection_confidence=0.50)
+        self.switch_delay = 0
+        self.BPM = 100
 
     def setup_header_list(self, folder_path="header"):
         myList = os.listdir(folder_path)
@@ -26,12 +30,18 @@ class Screen():
 
         return overlayList
 
-    def draw(self, img, lmList):
+    def draw_controls(self, img):
 
-        cv2.rectangle(img, (1000, 400), (1200, 425), (0, 255, 0), 3)
+        cv2.rectangle(img, (1000, 400), (1225, 425), (0, 255, 0), 3)
+        cv2.rectangle(img, (1000, 400), (int(self.BPM + 1000), 425), (255, 255, 255), cv2.FILLED)
+
         cv2.rectangle(img, (1000, 475), (1200, 500), (0, 255, 0), 3)
         cv2.rectangle(img, (1000, 550), (1200, 575), (0, 255, 0), 3)
         cv2.rectangle(img, (1000, 625), (1200, 650), (0, 255, 0), 3)
+
+        return img
+
+    def draw(self, img, lmList):
 
         if len(lmList) != 0:
 
@@ -46,24 +56,30 @@ class Screen():
                 cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), (255, 0, 255), cv2.FILLED)
                 print("Selection Mode")
                 # checking for the click
-                if y1 < 106:
-                    if 310 < x1 < 401:
-                        self.header_index = 3
-                    elif 465 < x1 < 560:
-                        self.header_index = 0
-                    elif 620 < x1 < 712:
-                        self.header_index = 2
-                    elif 857 < x1 < 933:
-                        self.header_index = 1
+                if y1 < 89:
+                    if 0 < x1 < 90:
+                        if self.header_index == 0 and self.switch_delay > 10:
+                            self.header_index = 1
+                            self.switch_delay = 0
+                        elif self.switch_delay > 10:
+                            self.header_index = 0
+                            self.switch_delay = 0
+
             # Drawing mode
             if fingers[1] and fingers[2] == False:
                 cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
                 print("Drawing Mode")
 
+            point = Point(x1, y1)
+            rectangle = create_rectangle_array((1000, 400), (1220, 425))
+            if point_intersects(point, rectangle):
+                self.BPM = int(x1-1000)
+
+
+
         return img
 
     def show(self):
-
 
         while True:
 
@@ -74,15 +90,21 @@ class Screen():
             # Find hand landmarks
             img = self.detector.findHands(img=img, draw=False)
             for handNumber in range(0, self.detector.handCount()):
-                lmList = self.detector.find_position(img, handNumber=handNumber, draw=False)
+                lmList = self.detector.find_position(img, handNumber=handNumber, draw=True)
                 img = self.draw(img, lmList)
 
             header = self.overlayList[self.header_index]
+            if self.header_index == 1:
+                self.draw_controls(img)
+
             img[0:header.shape[0], 0:header.shape[1]] = header
 
             cv2.imshow("Image", img)
 
             cv2.waitKey(1)
+            self.switch_delay += 1
+            if self.switch_delay > 500:
+                self.switch_delay = 0
 
 if __name__ == "__main__":
     screen = Screen()
