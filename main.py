@@ -1,4 +1,4 @@
-from src.handtracker.HandTrackingModule import HandDetector as hd
+from src.lib.HandTrackingModule import HandDetector as hd
 import cv2
 import time
 
