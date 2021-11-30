@@ -9,8 +9,11 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from geometry_utility import create_rectangle_array, point_intersects
 from PlusMinusButtons import PlusMinusButtons
+from Scales import Menu
+from constants import scales
 
-    # Leaving gracefully
+
+# Leaving gracefully
 class Screen():
     def __init__(self, screen_number=0, screen_size_x=1280, screen_size_y=720):
         self.cap = cv2.VideoCapture(screen_number)
@@ -28,9 +31,20 @@ class Screen():
         self.left_right_index = 4
 
         # Visual Control Member
-        self.plus_minus_subdivision = PlusMinusButtons(x=1000, y=350, label="Subdivision", label_offset_x=827, visible=False)
-        self.plus_minus_octave_range = PlusMinusButtons(x=1000, y=450, label="8ve range", label_offset_x=840, visible=False)
-        self.plus_minus_octave_base = PlusMinusButtons(x=1000, y=550, label="8ve base", label_offset_x=840, visible=False)
+        self.plus_minus_subdivision = PlusMinusButtons(x=1000, y=350, label="Subdivision", label_offset_x=827,
+                                                       visible=False)
+        self.plus_minus_octave_range = PlusMinusButtons(x=1000, y=450, label="8ve range", label_offset_x=840,
+                                                        visible=False)
+        self.plus_minus_octave_base = PlusMinusButtons(x=1000, y=550, label="8ve base", label_offset_x=840,
+                                                       visible=False)
+
+        self.scales_menu = Menu(x=200, y=50, menu_dictionary=scales)
+
+        pulse_sustain_dict = {"Pulse": 0, "Sustain": 1}
+        self.pulse_sustain_menu = Menu(750, 100, menu_dictionary=pulse_sustain_dict, btm_text_color=(255, 0, 0))
+
+        left_right_dict = {"Left":0, "Right":1}
+        self.left_right_menu = Menu(1000, 100, menu_dictionary=left_right_dict, btm_text_color=(255, 0, 255))
 
     def setup_header_list(self, folder_path="header"):
         myList = os.listdir(folder_path)
@@ -53,8 +67,6 @@ class Screen():
         cv2.putText(img, str(int(self.BPM)), (1010, 290),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (4, 201, 126), 2, cv2.LINE_AA)
 
-
-
         self.plus_minus_subdivision.set_visible(True)
         img = self.plus_minus_subdivision.draw(img)
 
@@ -64,16 +76,6 @@ class Screen():
 
         self.plus_minus_octave_base.set_visible(True)
         img = self.plus_minus_octave_base.draw(img)
-
-        # Octave Base Range
-        # cv2.rectangle(img, (1000, 550), (1050, 600), (255, 255, 255), cv2.FILLED)
-        # cv2.putText(img, "+", (1012, 585),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 1, (4, 201, 126), 2, cv2.LINE_AA)
-        # cv2.rectangle(img, (1100, 550), (1150, 600), (255, 255, 255), cv2.FILLED)
-        # cv2.putText(img, "-", (1112, 585),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 1, (4, 201, 126), 2, cv2.LINE_AA)
-        # cv2.putText(img, "8ve base", (840, 600),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         return img
 
@@ -127,26 +129,6 @@ class Screen():
         if point_intersects(point, bpm_rectangle):
             self.BPM = int(x1 - 1000)
 
-        # Pickup subdivision
-        point = Point(x1, y1)
-        subdivision_rectangle = create_rectangle_array((1000, 400), (1220, 425))
-        if point_intersects(point, subdivision_rectangle):
-            self.subdivision = int(x1 - 1000)
-
-        # Pickup Octave
-        point = Point(x1, y1)
-        octave_range_rectangle = create_rectangle_array((1000, 450), (1220, 475))
-        if point_intersects(point, octave_range_rectangle):
-            self.octave_range = int(x1 - 1000)
-
-        # Pickup Octave Base
-        point = Point(x1, y1)
-        octave_range_base_rectangle = create_rectangle_array((1000, 500), (1220, 525))
-        if point_intersects(point, octave_range_base_rectangle):
-            self.octave_base = int(x1 - 1000)
-
-        # cv2.putText(img, "8ve base", (837, 525),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         return img
 
     def set_pulse_sustain(self, x1, y1):
@@ -175,6 +157,10 @@ class Screen():
                 lmList = self.detector.find_position(img, handNumber=handNumber, draw=True)
                 img = self.draw(img, lmList)
 
+            img = self.scales_menu.draw(img)
+            img = self.pulse_sustain_menu.draw(img)
+            img = self.left_right_menu.draw(img)
+
             header = self.overlayList[self.header_index]
             if self.header_index == 1:
                 self.draw_controls(img)
@@ -182,7 +168,7 @@ class Screen():
             left_footer_menu = self.overlayList[self.pulse_sustain_index]
             left_right_selection = self.overlayList[self.left_right_index]
             img[0:header.shape[0], 0:header.shape[1]] = header
-            img[400:(left_footer_menu.shape[0]+400), 10:(left_footer_menu.shape[1]+10)] = left_footer_menu
+            img[400:(left_footer_menu.shape[0] + 400), 10:(left_footer_menu.shape[1] + 10)] = left_footer_menu
             img[0:(left_right_selection.shape[0]), 1000:(left_right_selection.shape[1] + 1000)] = left_right_selection
 
             cv2.imshow("Image", img)
@@ -191,6 +177,7 @@ class Screen():
             self.switch_delay += 1
             if self.switch_delay > 500:
                 self.switch_delay = 0
+
 
 if __name__ == "__main__":
     screen = Screen()
