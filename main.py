@@ -30,7 +30,15 @@ def demo_hand_tracker(w_cam=640, h_cam=480):
         fps = 1 / (cTime - p_time)
         p_time = cTime
 
-        cv2.putText(img, f'FPS: {int(fps)}', (400, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 2)
+        cv2.putText(
+            img,
+            f"FPS: {int(fps)}",
+            (400, 70),
+            cv2.FONT_HERSHEY_PLAIN,
+            3,
+            (255, 0, 0),
+            2,
+        )
         cv2.imshow("Image", img)
         cv2.waitKey(1)
 
