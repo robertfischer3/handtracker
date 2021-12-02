@@ -6,11 +6,14 @@ from shapely.geometry import Point
 from geometry_utility import create_rectangle_array, point_intersects
 from plus_minus_buttons import PlusMinusButtons
 from menu import Menu
+from slider import Slider
 from constants import scales
 
 
-# Leaving gracefully
 class Screen:
+    """
+    Screen object to serve as drawing platform
+    """
     def __init__(self, screen_number=0, screen_size_x=1280, screen_size_y=720):
         self.cap = cv2.VideoCapture(screen_number)
         self.cap.set(3, screen_size_x)
@@ -29,7 +32,7 @@ class Screen:
         self.init_controls()
 
     def init_controls(self):
-        # Visual Control Member
+        # Visual Control Members
         self.plus_minus_subdivision = PlusMinusButtons(
             x=1000, y=350, label="Subdivision", label_offset_x=827, visible=False
         )
@@ -48,6 +51,7 @@ class Screen:
         self.left_right_menu = Menu(
             1000, 100, menu_dictionary=left_right_dict, btm_text_color=(255, 0, 255)
         )
+        self.bpm_slider = Slider()
 
     def setup_header_list(self, folder_path="header"):
         myList = os.listdir(folder_path)
@@ -63,30 +67,7 @@ class Screen:
 
     def draw_controls(self, img):
 
-        cv2.rectangle(img, (1000, 250), (1225, 300), (192, 84, 80), 3)
-        cv2.rectangle(
-            img, (1000, 250), (int(self.BPM + 1000), 300), (255, 255, 255), cv2.FILLED
-        )
-        cv2.putText(
-            img,
-            "BPM",
-            (930, 300),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
-        cv2.putText(
-            img,
-            str(int(self.BPM)),
-            (1010, 290),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (4, 201, 126),
-            2,
-            cv2.LINE_AA,
-        )
+        img = self.bpm_slider.draw_controls(img)
 
         self.plus_minus_subdivision.set_visible(True)
         img = self.plus_minus_subdivision.draw(img)
@@ -100,7 +81,7 @@ class Screen:
 
         return img
 
-    def draw(self, img, lm_list):
+    def event_processing(self, img, lm_list):
 
         if len(lm_list) != 0:
 
@@ -113,7 +94,7 @@ class Screen:
             # Selection mode, if two fingers are up
             if fingers[1] and fingers[2]:
                 cv2.rectangle(
-                    img, (x1, y1 - 25), (x2, y2 + 25), (255, 0, 255), cv2.FILLED
+                    img, (x1, y1 - 15), (x2, y2 + 15), (255, 0, 255), cv2.FILLED
                 )
                 print("Selection Mode", x1, y1)
                 # checking for the click
@@ -129,9 +110,9 @@ class Screen:
             # Drawing mode
             if fingers[1] and fingers[2] == False:
                 cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
-                print("Drawing Mode")
+                print("Single Finger Mode")
 
-            img = self.set_sliders(img, x1, y1)
+            img = self.bpm_slider.set_sliders(img, x1, y1)
             self.plus_minus_subdivision.plus_btn_click(x1, y1)
             self.plus_minus_subdivision.minus_btn_click(x1, y1)
 
@@ -147,15 +128,6 @@ class Screen:
 
         return img
 
-    def set_sliders(self, img, x1, y1):
-        # Pickup BPM Control
-        point = Point(x1, y1)
-        bpm_rectangle = create_rectangle_array((1000, 250), (1220, 300))
-        if point_intersects(point, bpm_rectangle):
-            self.BPM = int(x1 - 1000)
-
-        return img
-
     async def show(self):
 
         while True:
@@ -168,9 +140,9 @@ class Screen:
             img = self.detector.findHands(img=img, draw=False)
             for handNumber in range(0, self.detector.handCount()):
                 lmList = self.detector.find_position(
-                    img, handNumber=handNumber, draw=True
+                    img, hand_number=handNumber, draw=True
                 )
-                img = self.draw(img, lmList)
+                img = self.event_processing(img, lmList)
 
             img = self.scales_menu.draw(img)
             img = self.pulse_sustain_menu.draw(img)
@@ -179,6 +151,8 @@ class Screen:
             header = self.overlayList[self.header_index]
             if self.header_index == 1:
                 self.draw_controls(img)
+            else:
+                pass
 
             assert isinstance(header, object)
             img[0: header.shape[0], 0: header.shape[1]] = header

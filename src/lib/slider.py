@@ -1,8 +1,13 @@
 import cv2
+from shapely.geometry import Point
+from geometry_utility import create_rectangle_array, point_intersects
 
-class Slider():
-    def __init__(self, BPM=100):
-        self.BPM
+
+class Slider:
+
+    def __init__(self, BPM=100, visible=True):
+        self.BPM = BPM
+        self.visible = visible
 
     def draw_controls(self, img):
         cv2.rectangle(img, (1000, 250), (1225, 300), (192, 84, 80), 3)
@@ -29,6 +34,7 @@ class Slider():
             2,
             cv2.LINE_AA,
         )
+        return img
 
     def set_sliders(self, img, x1, y1):
         # Pickup BPM Control

@@ -17,14 +17,14 @@ def demo_hand_tracker(w_cam=640, h_cam=480):
 
         if detector.handCount() > 0:
             for handNumber in range(0, detector.handCount()):
-                lmList = detector.find_position(img, handNumber=handNumber, draw=False)
+                lmList = detector.find_position(img, hand_number=handNumber, draw=False)
 
                 if len(lmList) != 0:
                     print(detector.is_left_or_right_hand(handNumber))
                     fingersOpen = detector.finger_is_open(lmList)
                     print(fingersOpen)
 
-                print(detector.find_z_depth(img, handNumber=handNumber))
+                print(detector.find_z_depth(img, hand_number=handNumber))
 
         cTime = time.time()
         fps = 1 / (cTime - p_time)

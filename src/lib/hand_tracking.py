@@ -46,12 +46,12 @@ class HandDetector:
             return 0
 
     def find_position(
-        self, img, handNumber=0, draw=True, circleDia=7, R=255, G=0, B=255
+        self, img, hand_number=0, draw=True, circleDia=7, R=255, G=0, B=255
     ):
         lmList = []
 
         if self.results.multi_hand_landmarks:
-            myHand = self.results.multi_hand_landmarks[handNumber]
+            myHand = self.results.multi_hand_landmarks[hand_number]
 
             for id, lm in enumerate(myHand.landmark):
                 h, w, c = img.shape
@@ -64,9 +64,9 @@ class HandDetector:
 
         return lmList
 
-    def find_z_depth(self, img, handNumber=0):
+    def find_z_depth(self, img, hand_number=0):
         if self.results.multi_hand_landmarks:
-            z_depth = self.results.multi_hand_landmarks[handNumber].landmark[0].z
+            z_depth = self.results.multi_hand_landmarks[hand_number].landmark[0].z
             return z_depth
         else:
             return 0

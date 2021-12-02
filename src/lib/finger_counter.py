@@ -44,7 +44,7 @@ while True:
 
     if detector.handCount() > 0:
         for handNumber in range(0, detector.handCount()):
-            lmList = detector.find_position(img, handNumber=handNumber, draw=False)
+            lmList = detector.find_position(img, hand_number=handNumber, draw=False)
 
             if len(lmList) != 0:
                 print(detector.is_left_or_right_hand(handNumber))

@@ -36,6 +36,13 @@ class Menu:
         # Sets the controls to make visible or not
         self.visible = visible
 
+    def get_visible(self):
+        """
+        Returns whether the control will be rendered or not
+        :return: boolean
+        """
+        return self.visible
+
     def menu_item_clicked(self, x, y):
         # Processes menu click if it occurs
         if self.visible:
@@ -79,6 +86,15 @@ class Menu:
         return overlay_img
 
     def draw(self, img):
+        """
+
+        :param img:
+        :return:
+        """
+
+        if not self.get_visible():
+            return
+
         # Create an overlay image to place buttons on
         overlay = img.copy()
 
